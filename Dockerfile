@@ -29,25 +29,17 @@ RUN . /opt/intel/oneapi/setvars.sh
 
 COPY ./ /code
 
-# # Build the EMVB project
-
-
-# Download the correct tar.gz file
-
-
-# Extract the downloaded file
-
 # Set the working directory (create if it doesn't exist)
 WORKDIR /index
 
 # Download the file into the current working directory (/index)
-RUN wget http://hpc.isti.cnr.it/~rulli/emvb-ecir2024/lotte/260k_m32_LOTTE_OPQ.tar.gz
+RUN wget http://hpc.isti.cnr.it/~rulli/emvb-ecir2024/efra/index_for_efra.tar.gz
 
 # Extract the downloaded file into the current working directory (/index)
-RUN tar -xvzf 260k_m32_LOTTE_OPQ.tar.gz
+RUN tar -xvzf index_for_efra.tar.gz
 
 # Optional: Remove the tar.gz file to save space
-RUN rm 260k_m32_LOTTE_OPQ.tar.gz
+RUN rm index_for_efra.tar.gz
 
 WORKDIR /code
 
@@ -61,5 +53,12 @@ RUN . /opt/intel/oneapi/setvars.sh && mkdir build && cd build \
 # ENV OMP_NUM_THREADS=1
 
 # # Add an entrypoint to easily run the EMVB binary
-ENTRYPOINT ["./build/perf_embv"]
+#£CMD ["./build/perf_embv"]
+RUN ls -l /code/build
+RUN chmod +x /code/build/perf_emvb
+
+WORKDIR /code
+
+CMD ["./build/perf_emvb"]
+
 

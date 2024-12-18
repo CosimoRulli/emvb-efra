@@ -63,9 +63,9 @@ int main(int argc, char **argv)
     size_t n_doc_to_score = get_env_var<size_t>("N_DOC_TO_SCORE", 1000);  // Default is 1000 docs to score
     size_t nprobe = get_env_var<size_t>("NPROBE", 10);  // Default nprobe is 10
     size_t out_second_stage = get_env_var<size_t>("OUT_SECOND_STAGE", 100);  // Default is 100 candidates in second stage
-    string queries_id_file = get_env_var<string>("QUERIES_ID_FILE", "queries.tsv");  // Default queries file
-    string index_dir_path = get_env_var<string>("INDEX_DIR_PATH", "index_dir");  // Default index dir
-    string alldoclens_path = get_env_var<string>("ALLDOCLENS_PATH", "doclens.npy");  // Default doclens file
+    string queries_id_file = get_env_var<string>("QUERIES_ID_FILE", "/index/index_for_efra/queries.tsv");  // Default queries file
+    string index_dir_path = get_env_var<string>("INDEX_DIR_PATH", "/index/index_for_efra");  // Default index dir
+    string alldoclens_path = get_env_var<string>("ALLDOCLENS_PATH", "/index/index_for_efra/doclens.npy");  // Default doclens file
     
     string run_outputfile = "run.json";
     string elapsed_times_files = "elapsed_times.json";
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
     valType *loaded_query_data = queriesArray.data<valType>();
 
     // Load qid mapping file
-    auto qid_map = load_qids(queries_id_file);
+    //auto qid_map = load_qids(queries_id_file);
     cout << "queries id loaded\n";
 
     // Load documents
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
         for (int i = 0; i < k; i++)
         {
             json result;
-            result["query_id"] = qid_map[query_id];
+            result["query_id"] = query_id;
             result["doc_id"] = get<0>(query_res[i]);
             result["score"] = get<1>(query_res[i]);
             run_results.push_back(result);
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 
         // Store elapsed time for the query
         elapsed_times.push_back({
-            {"query_id", qid_map[query_id]},
+            {"query_id", query_id},
             {"elapsed_time_ns", elapsed}
         });
     }

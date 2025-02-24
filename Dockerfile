@@ -59,6 +59,5 @@ RUN chmod +x /code/build/perf_emvb
 
 WORKDIR /code
 
-CMD ["./build/perf_emvb"]
-
-
+# Run the application with Python (using `python3` for explicitness)
+CMD ["python3", "main.py"]

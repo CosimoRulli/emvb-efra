@@ -145,7 +145,7 @@ int main(int argc, char **argv)
     // elapsed_out_file << elapsed_times.dump(4);
     // elapsed_out_file.close();
 
-    // cout << "Average Elapsed Time per query: " << total_time / n_queries << "\n";
+    cout << "Average Elapsed Time per query: " << (total_time / n_queries) * 0.000001 << " milliseconds \n";
 
     // Create the main output file linking run.json and elapsed_times.json
 

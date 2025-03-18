@@ -5,7 +5,7 @@ project(EMVB)
 enable_testing()
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -19,7 +19,9 @@ include_directories(include)
 # Set compiler options
 if(NOT MSVC)
 #  set(CMAKE_C_FLAGS "-O3 -ffast-math -march=native -mavx512f  -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "-O3 -ffast-math -march=native -mavx512f -mavx512vl -mavx512bw -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
+ # set(CMAKE_C_FLAGS "-O3 -ffast-math -march=native -mavx512f -mavx512vl -mavx512bw -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "-O3 -ffast-math -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
+
 
 
 else()
@@ -35,6 +37,10 @@ else()
   endif()
   set(CMAKE_C_FLAGS "/O2 /fp:fast ${MSVC_SIMD_FLAGS} ${CMAKE_C_FLAGS}")
 endif()
+
+
+
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wall -Wextra -Wno-missing-braces")
 

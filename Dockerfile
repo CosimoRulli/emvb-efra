@@ -42,10 +42,10 @@ RUN tar -xvzf index_for_efra.tar.gz
 RUN rm index_for_efra.tar.gz
 
 WORKDIR /code
-
+RUN python3 -m pip install -r requirements.txt
 
 RUN . /opt/intel/oneapi/setvars.sh && mkdir build && cd build \
-    && cmake -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF .. \
+    && cmake -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF -DFAISS_OPT_LEVEL=generic ..\
     && make -j
 
 

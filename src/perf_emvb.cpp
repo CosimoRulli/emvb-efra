@@ -53,8 +53,8 @@ size_t get_env_var<size_t>(const char* env_var, size_t default_value) {
 int main(int argc, char **argv)
 {
     // Set OpenMP number of threads
-    omp_set_num_threads(1);
-
+    //omp_set_num_threads(1);
+    cout <<"Initializing C++ execution\n";
     // Fetch arguments from environment variables
     int k = get_env_var<int>("K", 10);  // Default value is 10
     float thresh = get_env_var<float>("THRESH", 0.5);  // Default threshold is 0.5
@@ -67,12 +67,17 @@ int main(int argc, char **argv)
     string index_dir_path = get_env_var<string>("INDEX_DIR_PATH", "/index/index_for_efra");  // Default index dir
     string alldoclens_path = get_env_var<string>("ALLDOCLENS_PATH", "/index/index_for_efra/doclens.npy");  // Default doclens file
     
+    cout<<"Env variables obtained\n";
+
     string run_outputfile = "run.json";
     string elapsed_times_files = "elapsed_times.json";
 
     // Load query embeddings
     string queries_path = index_dir_path + "/query_embeddings.npy";
     cnpy::NpyArray queriesArray = cnpy::npy_load(queries_path);
+
+    cout<<"Query embeddings are loaded\n";
+
 
     size_t n_queries = queriesArray.shape[0];
     size_t vec_per_query = queriesArray.shape[1];

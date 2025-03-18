@@ -19,27 +19,29 @@ using namespace cnpy;
 
 const uint32_t BUFFER_SIZE = 50000;
 
-// Select the correct function at compile time
-#if defined(__AVX512F__)  // AVX-512 is supported
-    #define filter_if_optimal filter_if_avx512
-#else  // Use the scalar version if no AVX-512 support
-    #define filter_if_optimal filter_if
-#endif
+
+// #if defined(__AVX512F__)  
+//     #define filter_if_optimal filter_if_avx512
+// #else  // 
+//     #define filter_if_optimal filter_if
+// #endif
+
+#define filter_if_optimal filter_if
+#define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
+#define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
+
+// #if defined(__AVX512F__)  // AVX-512 is supported
+//     #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction
+// #else  /
+//     #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
+// #endif
 
 
-// Select the correct function at compile time
-#if defined(__AVX512F__)  // AVX-512 is supported
-    #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction
-#else  // Use the scalar version if no AVX-512 support
-    #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
-#endif
-
-
-#if defined(__AVX512F__)  // AVX-512 is supported
-    #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring
-#else  // Use the scalar version if no AVX-512 support
-    #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
-#endif
+// #if defined(__AVX512F__)  // AVX-512 is supported
+//     #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring
+// #else  // Use the scalar version if no AVX-512 support
+//     #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
+// #endif
 
 
 
@@ -136,14 +138,23 @@ public:
         size_t ntotal = pqCodesArray.shape[0];
         string pq_centroids_path = decomposed_index_path + "/pq_centroids.npy";
         pqCentroidsArray = cnpy::npy_load(pq_centroids_path);
-
+        std::cout << "Loading PQ centroids" << endl;
+        
         vector<float> pqcentroids{pqCentroidsArray.data<float>(), pqCentroidsArray.data<float>() + pqCentroidsArray.shape[0]};
+        std::cout << "PQ centroids loaded" << endl;
+        
         pq = ProductQuantizerX(K, pqCodesArray.shape[1], nbits, pq_codes, pqcentroids);
+        
+        cout<<"PQ object created\n";
 
         string centroids_to_pids = decomposed_index_path + "/centroids_to_pids.txt";
         load_centroid_to_pids(centroids_to_pids);
+        
+        cout<<"Centroids to pids loaded\n";
 
         init_bitvectors_32(this->n_centroids, this->bitvectors);
+
+    
         size_t bitvectors_centroids_size = (n_docs / 64) + 1;
 
         bitvectors_centroids.resize(bitvectors_centroids_size);
@@ -196,33 +207,33 @@ public:
     }
 
 
-    size_t *filter_if_avx512(const float th, const size_t i)
-    {
+    // size_t *filter_if_avx512(const float th, const size_t i)
+    // {
 
-        size_t *sorted_indexes = start_sorted;
-        __m512 broad_th = _mm512_set1_ps(th);
-        __m512 current_values;
-        size_t idx = 0;
-        for (size_t j = 0; j < n_centroids; j += 16)
-        {
-            // load unaligned at the moment.
-            current_values = _mm512_loadu_ps((const void *)&(centroids_scores[i * n_centroids + j]));
-            __mmask16 mask = _mm512_cmp_ps_mask(current_values, broad_th, _CMP_GT_OS);
-            if (mask != (uint16_t)0)
-            {
+    //     size_t *sorted_indexes = start_sorted;
+    //     __m512 broad_th = _mm512_set1_ps(th);
+    //     __m512 current_values;
+    //     size_t idx = 0;
+    //     for (size_t j = 0; j < n_centroids; j += 16)
+    //     {
+    //         // load unaligned at the moment.
+    //         current_values = _mm512_loadu_ps((const void *)&(centroids_scores[i * n_centroids + j]));
+    //         __mmask16 mask = _mm512_cmp_ps_mask(current_values, broad_th, _CMP_GT_OS);
+    //         if (mask != (uint16_t)0)
+    //         {
 
-                for (size_t bit = 0; bit < 16; bit++)
-                {
-                    if ((mask >> bit) & (uint16_t)1)
-                    {
-                        sorted_indexes[idx] = j + bit;
-                        idx++;
-                    }
-                }
-            }
-        }
-        return sorted_indexes + idx;
-    }
+    //             for (size_t bit = 0; bit < 16; bit++)
+    //             {
+    //                 if ((mask >> bit) & (uint16_t)1)
+    //                 {
+    //                     sorted_indexes[idx] = j + bit;
+    //                     idx++;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     return sorted_indexes + idx;
+    // }
 
   
 
@@ -311,6 +322,15 @@ public:
 
     /// Ending functions for phase 1.
 
+
+    size_t popcount(uint32_t x) {
+        size_t count = 0;
+        while (x) {
+            count += x & 1;
+            x >>= 1;
+        }
+        return count;
+    }
     /// Starting functions for phase 2.
 
     vector<numDocsType> compute_hit_frequency(vector<numDocsType> &candidate_documents, const float th, const size_t k_centroids)

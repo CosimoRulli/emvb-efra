@@ -136,7 +136,7 @@ public:
         size_t ntotal = pqCodesArray.shape[0];
         string pq_centroids_path = decomposed_index_path + "/pq_centroids.npy";
         pqCentroidsArray = cnpy::npy_load(pq_centroids_path);
-        cout<<"pqCentroidsArray loaded\n";
+        cout<<"pqCentroid loaded\n";
 
         vector<float> pqcentroids{pqCentroidsArray.data<float>(), pqCentroidsArray.data<float>() + pqCentroidsArray.shape[0]};
         pq = ProductQuantizerX(K, pqCodesArray.shape[1], nbits, pq_codes, pqcentroids);

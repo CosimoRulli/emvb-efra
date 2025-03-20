@@ -25,7 +25,7 @@ const uint32_t BUFFER_SIZE = 50000;
 #else  // Use the scalar version if no AVX-512 support
     #define filter_if_optimal filter_if
 #endif
-
+//#define filter_if_optimal filter_if
 
 // Select the correct function at compile time
 #if defined(__AVX512F__)  // AVX-512 is supported
@@ -33,7 +33,7 @@ const uint32_t BUFFER_SIZE = 50000;
 #else  // Use the scalar version if no AVX-512 support
     #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
 #endif
-
+//#define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
 
 #if defined(__AVX512F__)  // AVX-512 is supported
     #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring
@@ -41,7 +41,7 @@ const uint32_t BUFFER_SIZE = 50000;
     #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
 #endif
 
-
+//#define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
 
 class DocumentScorer
 {
@@ -133,17 +133,22 @@ public:
         doc_offsets.shrink_to_fit();
         std::cout << "Number of documents: " << n_docs << endl;
         size_t nbits = 8; // todo this should not be hardcoded
-        size_t ntotal = pqCodesArray.shape[0];
+
+        //size_t ntotal = pqCodesArray.shape[0];
+        //cout<<"N total"<<ntotal<<"\n";
+        cout<<"trying to load centroids \n"<<flush;
         string pq_centroids_path = decomposed_index_path + "/pq_centroids.npy";
+
         pqCentroidsArray = cnpy::npy_load(pq_centroids_path);
-        cout<<"pqCentroid loaded\n";
+        cout<<"pqCentroid loaded\n"<<flush;
 
         vector<float> pqcentroids{pqCentroidsArray.data<float>(), pqCentroidsArray.data<float>() + pqCentroidsArray.shape[0]};
         pq = ProductQuantizerX(K, pqCodesArray.shape[1], nbits, pq_codes, pqcentroids);
-        cout<<"Product QuantizerX create\n";
+        cout<<"Product QuantizerX create\n"<<flush;
+        
         string centroids_to_pids = decomposed_index_path + "/centroids_to_pids.txt";
         load_centroid_to_pids(centroids_to_pids);
-        cout<<"Centroids to pid loaded\n";
+        cout<<"Centroids to pid loaded\n"<<flush;
         
         init_bitvectors_32(this->n_centroids, this->bitvectors);
         size_t bitvectors_centroids_size = (n_docs / 64) + 1;
@@ -427,31 +432,60 @@ public:
     }
 
 
-    inline float compute_score_by_column_reduction_scalar(const std::vector<float> &centroid_distances, const size_t doclen, const size_t M)
-    {
-        // Initialize maxs0 and maxs1 using the first two chunks of 16 values each.
-        std::vector<float> maxs0(16), maxs1(16);
-        for (size_t j = 0; j < 16; j++) {
-            maxs0[j] = centroid_distances[j];
-            maxs1[j] = centroid_distances[16 + j];
-        }
+    // inline float compute_score_by_column_reduction_scalar(const std::vector<float> &centroid_distances, const size_t doclen, const size_t M)
+    // {
+    //     // Initialize maxs0 and maxs1 using the first two chunks of 16 values each.
+    //     std::vector<float> maxs0(16), maxs1(16);
+    //     for (size_t j = 0; j < 16; j++) {
+    //         maxs0[j] = centroid_distances[j];
+    //         maxs1[j] = centroid_distances[16 + j];
+    //     }
 
-        // Process remaining rows
-        for (size_t i = 1; i < doclen; i++)
-        {
-            for (size_t j = 0; j < 16; j++) {
-                // Compare each value and store the max in maxs0 and maxs1
-                maxs0[j] = std::max(maxs0[j], centroid_distances[i * M + j]);
-                maxs1[j] = std::max(maxs1[j], centroid_distances[i * M + 16 + j]);
+    //     // Process remaining rows
+    //     for (size_t i = 1; i < doclen; i++)
+    //     {
+    //         for (size_t j = 0; j < 16; j++) {
+    //             // Compare each value and store the max in maxs0 and maxs1
+    //             maxs0[j] = std::max(maxs0[j], centroid_distances[i * M + j]);
+    //             maxs1[j] = std::max(maxs1[j], centroid_distances[i * M + 16 + j]);
+    //         }
+    //     }
+
+    //     // Add corresponding elements in maxs0 and maxs1
+    //     float sum = 0.0f;
+    //     for (size_t j = 0; j < 16; j++) {
+    //         sum += maxs0[j] + maxs1[j];
+    //     }
+
+    //     return sum;
+    // }
+
+    inline float compute_score_by_column_reduction_scalar(
+        const std::vector<float>& centroid_distances, 
+        const size_t doclen, 
+        const size_t M)
+    {
+        // Assume M >= 32.
+        std::vector<float> maxs(32);
+    
+        // Initialize with the first row's first 32 values.
+        for (size_t j = 0; j < 32; j++) {
+            maxs[j] = centroid_distances[j];
+        }
+    
+        // Process remaining rows.
+        for (size_t i = 1; i < doclen; i++) {
+            for (size_t j = 0; j < 32; j++) {
+                maxs[j] = std::max(maxs[j], centroid_distances[i * M + j]);
             }
         }
-
-        // Add corresponding elements in maxs0 and maxs1
+    
+        // Sum the maximum values.
         float sum = 0.0f;
-        for (size_t j = 0; j < 16; j++) {
-            sum += maxs0[j] + maxs1[j];
+        for (const auto& value : maxs) {
+            sum += value;
         }
-
+    
         return sum;
     }
 
@@ -644,30 +678,32 @@ public:
         return current_buffer;
     }
 
-    inline int *filter_centroids_in_scoring_scalar(const float th, const float *current_centroid_scores, const size_t doclen)
+    inline int *filter_centroids_in_scoring_scalar(
+        const float th, 
+        const float *current_centroid_scores, 
+        const size_t doclen)
     {
         int *current_buffer = this->buffer_centroids;
-
-        for (size_t j = 0; j < doclen; j++)
-        {
-            if (current_centroid_scores[j] > th)
-            {
-                *current_buffer = GLOBAL_INDEXES[j];
+    
+        for (size_t j = 0; j < doclen; j++) {
+            if (current_centroid_scores[j] > th) {
+                *current_buffer = j;  // directly store j instead of GLOBAL_INDEXES[j]
                 current_buffer++;
             }
         }
-
+    
         return current_buffer;
     }
+    
 
     vector<tuple<size_t, float>> compute_topk_documents_selected(const float *queries_data, const globalIdxType q_start, const vector<numDocsType> &doc_ids, const size_t k, const float th)
     {
         auto heap = HeapFloats(k);
         pq.precompute_distance_table(queries_data + q_start, M);
-
+        cout<<"Starting compute_topk_documents_selected\n"<<flush;
         for (numDocsType doc_id : doc_ids)
         {
-
+            cout<<"Doc id "<<doc_id<<"\n"<<flush;
             auto doclen = all_doclens[doc_id];
             auto doc_offset = doc_offsets[doc_id];
             vector<float> buffer_for_distances(doclen, 0.0);

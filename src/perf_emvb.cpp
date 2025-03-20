@@ -97,23 +97,28 @@ int main(int argc, char **argv)
 
     uint64_t total_time = 0;
 
-    cout << "SEARCH STARTED\n";
+    cout << "SEARCH STARTED\n"<<flush;  
     for (size_t query_id = 0; query_id < n_queries; query_id++)
-    {
+    {   
+        cout<<"Query id "<<query_id<<"\n"<<flush;
         auto start = chrono::high_resolution_clock::now();
         globalIdxType q_start = query_id * values_per_query;
 
         // PHASE 1: Candidate documents retrieval
         auto candidate_docs = document_scorer.find_candidate_docs(loaded_query_data, q_start, nprobe, thresh);
+        cout<<"PHASE 1 done \n"<<flush;
 
         // PHASE 2: Candidate document filtering
         auto selected_docs = document_scorer.compute_hit_frequency(candidate_docs, thresh, n_doc_to_score);
+        cout<<"PHASE 2 done \n"<<flush;
 
         // PHASE 3: Second stage filtering
         auto selected_docs_2nd = document_scorer.second_stage_filtering(loaded_query_data, q_start, selected_docs, out_second_stage);
+        cout<<"PHASE 3 done \n"<<flush;
 
         // PHASE 4: Document scoring
         auto query_res = document_scorer.compute_topk_documents_selected(loaded_query_data, q_start, selected_docs_2nd, k, thresh_query);
+        cout<<"PHASE 4 done \n"<<flush;
 
         auto elapsed = chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();
         total_time += elapsed;

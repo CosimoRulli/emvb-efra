@@ -1,10 +1,10 @@
-# Use an Ubuntu base image
+
 FROM ubuntu:22.04
 
-# Set environment variables for non-interactive installs
+
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install basic dependencies
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -29,35 +29,32 @@ RUN . /opt/intel/oneapi/setvars.sh
 
 COPY ./ /code
 
-# Set the working directory (create if it doesn't exist)
+
 WORKDIR /index
 
-# Download the file into the current working directory (/index)
+
 RUN wget http://hpc.isti.cnr.it/~rulli/emvb-ecir2024/efra/index_for_efra.tar.gz
 
-# Extract the downloaded file into the current working directory (/index)
+
 RUN tar -xvzf index_for_efra.tar.gz
 
-# Optional: Remove the tar.gz file to save space
+
 RUN rm index_for_efra.tar.gz
 
 WORKDIR /code
 
+RUN python3 -m pip install requests
 
 RUN . /opt/intel/oneapi/setvars.sh && mkdir build && cd build \
-    && cmake -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF .. \
+    && cmake -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_PYTHON=OFF .. -DFAISS_OPT_LEVEL=generic \
     && make -j
 
 
-# # Set the number of threads for MKL (as recommended)
-# ENV OMP_NUM_THREADS=1
 
-# # Add an entrypoint to easily run the EMVB binary
-#£CMD ["./build/perf_embv"]
 RUN ls -l /code/build
 RUN chmod +x /code/build/perf_emvb
 
 WORKDIR /code
 
-# Run the application with Python (using `python3` for explicitness)
+
 CMD ["python3", "main.py"]

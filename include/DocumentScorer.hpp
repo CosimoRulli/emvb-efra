@@ -136,13 +136,15 @@ public:
         size_t ntotal = pqCodesArray.shape[0];
         string pq_centroids_path = decomposed_index_path + "/pq_centroids.npy";
         pqCentroidsArray = cnpy::npy_load(pq_centroids_path);
+        cout<<"pqCentroidsArray loaded\n";
 
         vector<float> pqcentroids{pqCentroidsArray.data<float>(), pqCentroidsArray.data<float>() + pqCentroidsArray.shape[0]};
         pq = ProductQuantizerX(K, pqCodesArray.shape[1], nbits, pq_codes, pqcentroids);
-
+        cout<<"Product QuantizerX create\n";
         string centroids_to_pids = decomposed_index_path + "/centroids_to_pids.txt";
         load_centroid_to_pids(centroids_to_pids);
-
+        cout<<"Centroids to pid loaded\n";
+        
         init_bitvectors_32(this->n_centroids, this->bitvectors);
         size_t bitvectors_centroids_size = (n_docs / 64) + 1;
 

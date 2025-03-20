@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.14)
 
 project(EMVB)
@@ -20,6 +21,8 @@ include_directories(include)
 if(NOT MSVC)
 #  set(CMAKE_C_FLAGS "-O3 -ffast-math -march=native -mavx512f  -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "-O3 -ffast-math -march=native -mavx512f -mavx512vl -mavx512bw -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
+  #set(CMAKE_C_FLAGS "-O3 -ffast-math -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
+
 
 
 else()

@@ -56,20 +56,56 @@ class DataHubClient:
             'file': (os.path.basename(file), open(file, 'rb'), 'application/octet-stream')
         }
         response = requests.post(url, data=parameters, files=files, headers=self.auth_header)
+        print(response)
         if response.ok:
             return True
         return False
 
-    def create_dataset_with_objects(self, namespace: str, name: str, version: str, file: str, objects: list[str],
-                                    description: str, tags: list[str] = []) -> bool:
+    # def create_dataset_with_objects(self, namespace: str, name: str, version: str, file: str, objects: list[str],
+    #                                 description: str, tags: list[str] = []) -> bool:
+    #     url = self.dataset_url(namespace, name, version)
+    #     parameters = {'description': description}
+    #     if len(tags) > 0:
+    #         parameters['tags[]'] = tags
+    #     files = {
+    #         'file': None
+    #     }
+    #     response = requests.post(url, data=parameters, files=files, headers=self.auth_header)
+    #     if response.ok:
+    #         for obj in objects:
+    #             id = os.path.basename(obj)
+    #             obj_files = {
+    #                 'file': (id, open(obj, 'rb'), 'application/octet-stream')
+    #             }
+    #             obj_url = url + f'/{id}'
+    #             obj_response = requests.post(obj_url, data={}, files=obj_files, headers=self.auth_header)
+    #             if not obj_response.ok:
+    #                 self.delete_dataset(namespace, name, version)
+    #                 return False
+    #         files = {
+    #             'file': (os.path.basename(file), open(file, 'rb'), 'application/octet-stream')
+    #         }
+    #         finalize_url = url + '/finalize'
+    #         response = requests.post(finalize_url, data={}, files=files, headers=self.auth_header)
+    #         if response.ok:
+    #             return True
+    #     return False
+
+    def create_dataset_with_objects(self, namespace: str, name: str, version: str, file: str, objects: list[str], description: str, tags: list[str] = []) -> bool:
         url = self.dataset_url(namespace, name, version)
+        print(f"[DEBUG] Creating dataset with objects at URL: {url}")
+
         parameters = {'description': description}
         if len(tags) > 0:
             parameters['tags[]'] = tags
+        print(f"[DEBUG] Parameters for dataset creation: {parameters}")
+
         files = {
             'file': None
         }
         response = requests.post(url, data=parameters, files=files, headers=self.auth_header)
+        print(f"[DEBUG] Initial dataset creation response status: {response.status_code}")
+
         if response.ok:
             for obj in objects:
                 id = os.path.basename(obj)
@@ -77,19 +113,29 @@ class DataHubClient:
                     'file': (id, open(obj, 'rb'), 'application/octet-stream')
                 }
                 obj_url = url + f'/{id}'
-                obj_response = requests.post(obj_url, data={}, files=obj_files, headers=self.auth_header)
-                if not obj_response.ok:
-                    self.delete_dataset(namespace, name, version)
-                    return False
+
+                try:
+                    obj_response = requests.post(obj_url, data={}, files=obj_files, headers=self.auth_header, timeout=120)
+                except requests.exceptions.Timeout as e:
+                    print(f"[ERROR] Timeout uploading object '{id}': {e}")
+                    continue 
+
+
             files = {
                 'file': (os.path.basename(file), open(file, 'rb'), 'application/octet-stream')
             }
             finalize_url = url + '/finalize'
+            print(f"[DEBUG] Finalizing dataset creation at URL: {finalize_url}")
             response = requests.post(finalize_url, data={}, files=files, headers=self.auth_header)
-            if response.ok:
-                return True
-        return False
+            print(f"[DEBUG] Finalization response status: {response.status_code}")
 
+            if response.ok:
+                print("[DEBUG] Dataset with objects created and finalized successfully.")
+                return True
+
+        print("[ERROR] Failed to create dataset with objects.")
+        return False
+    
     def delete_dataset(self, namespace: str, name: str, version: str) -> bool:
         response = requests.delete(self.dataset_url(namespace, name, version), headers=self.auth_header)
         if response.ok:

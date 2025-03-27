@@ -19,29 +19,29 @@ using namespace cnpy;
 
 const uint32_t BUFFER_SIZE = 50000;
 
-// Select the correct function at compile time
-#if defined(__AVX512F__)  // AVX-512 is supported
-    #define filter_if_optimal filter_if_avx512
-#else  // Use the scalar version if no AVX-512 support
-    #define filter_if_optimal filter_if
-#endif
-//#define filter_if_optimal filter_if
+// // Select the correct function at compile time
+// #if defined(__AVX512F__)  // AVX-512 is supported
+//     #define filter_if_optimal filter_if_avx512
+// #else  // Use the scalar version if no AVX-512 support
+//     #define filter_if_optimal filter_if
+// #endif
+#define filter_if_optimal filter_if
 
-// Select the correct function at compile time
-#if defined(__AVX512F__)  // AVX-512 is supported
-    #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction
-#else  // Use the scalar version if no AVX-512 support
-    #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
-#endif
-//#define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
+// // Select the correct function at compile time
+// #if defined(__AVX512F__)  // AVX-512 is supported
+//     #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction
+// #else  // Use the scalar version if no AVX-512 support
+//     #define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
+// #endif
+#define compute_score_by_column_reduction_optimal compute_score_by_column_reduction_scalar
 
-#if defined(__AVX512F__)  // AVX-512 is supported
-    #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring
-#else  // Use the scalar version if no AVX-512 support
-    #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
-#endif
+// #if defined(__AVX512F__)  // AVX-512 is supported
+//     #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring
+// #else  // Use the scalar version if no AVX-512 support
+//     #define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
+// #endif
 
-//#define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
+#define filter_centroids_in_scoring_optimal filter_centroids_in_scoring_scalar
 
 class DocumentScorer
 {
@@ -687,7 +687,7 @@ public:
     
         for (size_t j = 0; j < doclen; j++) {
             if (current_centroid_scores[j] > th) {
-                *current_buffer = j;  // directly store j instead of GLOBAL_INDEXES[j]
+                *current_buffer = j;  
                 current_buffer++;
             }
         }
@@ -700,10 +700,8 @@ public:
     {
         auto heap = HeapFloats(k);
         pq.precompute_distance_table(queries_data + q_start, M);
-        cout<<"Starting compute_topk_documents_selected\n"<<flush;
         for (numDocsType doc_id : doc_ids)
         {
-            cout<<"Doc id "<<doc_id<<"\n"<<flush;
             auto doclen = all_doclens[doc_id];
             auto doc_offset = doc_offsets[doc_id];
             vector<float> buffer_for_distances(doclen, 0.0);

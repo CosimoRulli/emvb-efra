@@ -15,8 +15,11 @@ class DataHubClient:
         self.list_url = host + '/api/v1/datasets/list'
 
     def dataset_url(self, namespace: str, name: str, version: str):
-        return self.host + f'/api/v1/datasets/{namespace}/{name}/{version}'
-
+        dataset_url = self.host + f'/api/v1/datasets/{namespace}/{name}/{version}'
+        print (f"The dataset URL is {dataset_url}")
+        return dataset_url
+    
+    
     def list_datasets(self, start: int = 0, size: int = 10, namespace: str = None,
                       name: str = None, version: str = None):
         params = {'start': start, 'rows': size}

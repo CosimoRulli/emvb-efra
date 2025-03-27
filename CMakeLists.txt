@@ -21,7 +21,7 @@ include_directories(include)
 if(NOT MSVC)
   #set(CMAKE_C_FLAGS "-O3 -ffast-math -march=native -mavx512f  -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
   
-  set(CMAKE_C_FLAGS "-O2 -ffast-math -march=native -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "-O2 -ffast-math -funroll-loops -fopenmp -g ${CMAKE_C_FLAGS}")
 
 
 

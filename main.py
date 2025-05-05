@@ -4,14 +4,17 @@ import json
 from python.datahubclient import DataHubClient 
 import os
 
+#DATAHUB_HOST = 'https://api-gate.efra.maize.io/datahub'
+
 
 
 def get_os_vars_input():
     INPUT_DATASET_FULL_NAME = os.getenv('INPUT_DATASET')
-
+    print("INPUT_DATASET_FULL_NAME", INPUT_DATASET_FULL_NAME)
     INPUT_NAMESPACE = INPUT_DATASET_FULL_NAME.split('/')[0]
     INPUT_DATASET = INPUT_DATASET_FULL_NAME.split('/')[1]
     INPUT_VERSION = INPUT_DATASET_FULL_NAME.split('/')[2]
+    
     return INPUT_NAMESPACE, INPUT_DATASET, INPUT_VERSION
 
 def get_os_vars_output():
@@ -33,7 +36,7 @@ def main():
 
     DATAHUB_HOST = os.getenv('DATAHUB_HOST') 
     print(DATAHUB_HOST)
-    INPUT_DATASET = os.getenv('INPUT_DATASET') 
+    #INPUT_DATASET = os.getenv('INPUT_DATASET') 
     
     
     print("INPUT_NAMESPACE:", INPUT_NAMESPACE)
@@ -43,6 +46,7 @@ def main():
     MODEL_NAMESPACE = os.getenv('MODEL_NAMESPACE')
     MODEL_NAME = os.getenv('MODEL_NAME')
     MODEL_VERSION = os.getenv('MODEL_VERSION')
+    
     dh_client = DataHubClient(DATAHUB_HOST, DATAHUB_API_KEY)
     
     metadata = dh_client.get_dataset_data(INPUT_NAMESPACE, INPUT_DATASET, INPUT_VERSION)

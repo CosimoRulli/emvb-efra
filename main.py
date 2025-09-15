@@ -4,12 +4,28 @@ import json
 from python.datahubclient import DataHubClient 
 import os
 
-#DATAHUB_HOST = 'https://api-gate.efra.maize.io/datahub'
+READ_FROM_ENV = True
 
 
+if not READ_FROM_ENV:
+    DATAHUB_HOST = 'https://api-gate.efra.maize.io/datahub'
+    DATAHUB_API_KEY = 'cnr-YCfdx54Fv58HWVOOkyh7LRUESUezesOC4UWiJPsrFzC12fSkTQ6Pc6x5dqpQ'
+else:
+    DATAHUB_API_KEY = os.getenv('DATAHUB_API_KEY')
+    DATAHUB_HOST = os.getenv('DATAHUB_HOST')
+
+
+
+
+DOCSSTORE_FILE_NAME = "docsstore.json"
+QUERIESSTORE_FILE_NAME = "queriesstore.json"
 
 def get_os_vars_input():
-    INPUT_DATASET_FULL_NAME = os.getenv('INPUT_DATASET')
+    if not READ_FROM_ENV:
+        INPUT_DATASET_FULL_NAME="CNR/msmarco-passage_trec-dl-2019_judged-small/1"
+    else:
+        INPUT_DATASET_FULL_NAME = os.getenv('INPUT_DATASET')
+        
     print("INPUT_DATASET_FULL_NAME", INPUT_DATASET_FULL_NAME)
     INPUT_NAMESPACE = INPUT_DATASET_FULL_NAME.split('/')[0]
     INPUT_DATASET = INPUT_DATASET_FULL_NAME.split('/')[1]
@@ -18,27 +34,26 @@ def get_os_vars_input():
     return INPUT_NAMESPACE, INPUT_DATASET, INPUT_VERSION
 
 def get_os_vars_output():
-    OUTPUT_DATASET_FULL_NAME = os.getenv('OUTPUT_DATASET')
+    if not READ_FROM_ENV:
+        OUTPUT_DATASET_FULL_NAME="CNR/emvb/1.0"
+    else:
+        OUTPUT_DATASET_FULL_NAME = os.getenv('OUTPUT_DATASET')
     OUTPUT_NAMESPACE = OUTPUT_DATASET_FULL_NAME.split('/')[0]
     OUTPUT_DATASET = OUTPUT_DATASET_FULL_NAME.split('/')[1]
     OUTPUT_VERSION = OUTPUT_DATASET_FULL_NAME.split('/')[2]
-    OUTPUT_DESC = os.getenv('OUTPUT_DESC')
-    OUTPUT_TAGS = os.getenv('OUTPUT_TAGS')
+    if not READ_FROM_ENV:
+        OUTPUT_DESC = "emvb test"
+        OUTPUT_TAGS = ["emvb", "test"]
+    else:
+        OUTPUT_DESC = os.getenv('OUTPUT_DESC')
+        OUTPUT_TAGS = ["emvb", "retrieval"]
     return OUTPUT_NAMESPACE, OUTPUT_DATASET, OUTPUT_VERSION, OUTPUT_DESC, OUTPUT_TAGS
 
 
 
 def main():
-    INPUT_NAMESPACE, INPUT_DATASET, INPUT_VERSION = get_os_vars_input()
-
-    DATAHUB_API_KEY = os.getenv('DATAHUB_API_KEY') 
-    print("API_KEY", DATAHUB_API_KEY)
-
-    DATAHUB_HOST = os.getenv('DATAHUB_HOST') 
-    print(DATAHUB_HOST)
-    #INPUT_DATASET = os.getenv('INPUT_DATASET') 
     
-    
+    INPUT_NAMESPACE, INPUT_DATASET, INPUT_VERSION = get_os_vars_input()    
     print("INPUT_NAMESPACE:", INPUT_NAMESPACE)
     print("INPUT_DATASET:", INPUT_DATASET)
     print("INPUT_VERSION:", INPUT_VERSION)
